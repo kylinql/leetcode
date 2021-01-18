@@ -40,16 +40,24 @@ public class 账户合并_721 {
      * accounts[i][j]的长度将在[1，30]的范围内。
      */
 
+
+    /**
+     * 官方题解 并查集+HashMap
+     *
+     * @param args
+     */
+
     public static void main(String[] args) {
 
         String str = "[[\"Gabe\",\"Gabe0@m.co\",\"Gabe3@m.co\",\"Gabe1@m.co\"],[\"Kevin\",\"Kevin3@m.co\",\"Kevin5@m.co\",\"Kevin0@m.co\"],[\"Ethan\",\"Ethan5@m.co\",\"Ethan4@m.co\",\"Ethan0@m.co\"],[\"Hanzo\",\"Hanzo3@m.co\",\"Hanzo1@m.co\",\"Hanzo0@m.co\"],[\"Fern\",\"Fern5@m.co\",\"Fern1@m.co\",\"Fern0@m.co\"]]";
+//        str = "[[\"David\",\"David0@m.co\",\"David1@m.co\"],[\"David\",\"David3@m.co\",\"David4@m.co\"],[\"David\",\"David4@m.co\",\"David5@m.co\"],[\"David\",\"David2@m.co\",\"David3@m.co\"],[\"David\",\"David1@m.co\",\"David2@m.co\"]]";
         List<List> input = JSONObject.parseArray(str, List.class);
         List<List<String>> accounts = new ArrayList<>();
         for (List l : input) {
             List<String> list = (List<String>) l.stream().map(Object::toString).collect(Collectors.toList());
             accounts.add(list);
         }
-        System.out.println(accountsMerge(accounts));
+        System.out.println(accountsMerge_1(accounts));
     }
 
 
@@ -59,8 +67,8 @@ public class 账户合并_721 {
      */
     public static List<List<String>> accountsMerge(List<List<String>> accounts) {
         Map<Integer, List<String>> accountMap = new HashMap<>();
-        Map<String, Integer> emailIdMap = new HashMap<>(1000 * 30);
-        Map<Integer, String> idNameMap = new HashMap<>(64);
+        Map<String, Integer> emailIdMap = new HashMap<>();
+        Map<Integer, String> idNameMap = new HashMap<>();
         Integer[] userId = {0};
         accounts.forEach(account -> {
             // 读取每个账户，为账户寻找是否存在，并且合并
@@ -115,5 +123,72 @@ public class 账户合并_721 {
             emailList.add(0, name);
             return emailList;
         }).collect(Collectors.toList());
+    }
+
+    public static List<List<String>> accountsMerge_1(List<List<String>> accounts) {
+        Map<String, Integer> emailIdMap = new HashMap<>(1000 * 30);
+        Map<Integer, String> idNameMap = new HashMap<>(64);
+        Integer[] idFather = new Integer[1005];  // 编号和编号对应的父亲id
+        Integer userId = 0;
+        for (List<String> account : accounts) {
+            Integer thisId = ++userId;
+            Set<Integer> childIdSet = new HashSet<>();
+            for (int i = 1; i < account.size(); i++) {
+                String email = account.get(i);
+
+                if (emailIdMap.containsKey(email)) {
+                    // 获取这个email对应的拥有者
+                    Integer id = emailIdMap.get(email);
+                    childIdSet.add(id);
+                }
+                emailIdMap.put(email, thisId);
+            }
+
+            // 找到了这个节点的所有有关联的节点
+            idFather[thisId] = thisId;
+            // 当前节点是所有节点的父亲节点
+            for (Integer childId : childIdSet) {
+                changeFather(childId, thisId, idFather);
+            }
+
+            idNameMap.put(thisId, account.get(0));
+        }
+
+        Map<Integer, List<String>> accountMap = new HashMap<>();
+        emailIdMap.entrySet().parallelStream().forEach(entry -> {
+            String email = entry.getKey();
+            Integer id = entry.getValue();
+            Integer father = getFather(id, idFather);
+            List<String> emails = accountMap.getOrDefault(father, new ArrayList<>());
+            emails.add(email);
+            accountMap.put(father, emails);
+        });
+
+
+        return accountMap.entrySet().stream().map(entry -> {
+            String name = idNameMap.get(entry.getKey());
+            entry.getValue().toArray(new String[0]);
+            List<String> emailList = entry.getValue();
+            emailList.sort(String::compareTo);
+            emailList.add(0, name);
+            return emailList;
+        }).collect(Collectors.toList());
+    }
+
+    private static void changeFather(Integer childId, Integer fatherId, Integer[] idFather) {
+        if (idFather[childId].equals(childId)) {
+            idFather[childId] = fatherId;
+            return;
+        }
+        changeFather(idFather[childId], fatherId, idFather);
+        idFather[childId] = fatherId;
+        return;
+    }
+
+    private static Integer getFather(Integer id, Integer[] idFather) {
+        if (idFather.length > id && !idFather[id].equals(id)) {
+            return getFather(idFather[id], idFather);
+        }
+        return id;
     }
 }
