@@ -126,7 +126,7 @@ public class 账户合并_721 {
     }
 
     public static List<List<String>> accountsMerge_1(List<List<String>> accounts) {
-        Map<String, Integer> emailIdMap = new HashMap<>(1000 * 30);
+        Map<String, Integer> emailIdMap = new HashMap<>();
         Map<Integer, String> idNameMap = new HashMap<>(64);
         Integer[] idFather = new Integer[1005];  // 编号和编号对应的父亲id
         Integer userId = 0;
