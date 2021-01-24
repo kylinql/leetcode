@@ -49,10 +49,23 @@ public class 找到最小生成树里的关键边和伪关键边_1489 {
     public static void main(String[] args) {
 
         int n = 5;
+        int[][] edges = {{0, 1, 1}, {1, 2, 1}, {2, 3, 2}, {0, 3, 2}, {0, 4, 3}, {3, 4, 3}, {1, 4, 6}};
+        // [[0,1],[2,3,4,5]]
 
-        int[][] edges = {{0,1,1},{1,2,1},{2,3,2},{0,3,2},{0,4,3},{3,4,3},{1,4,6}};
+        n = 6;
+        int[][] edges1 = {{0, 1, 1}, {1, 2, 1}, {0, 2, 1}, {2, 3, 4}, {3, 4, 2}, {3, 5, 2}, {4, 5, 2}};
+        //预期：
+        //[[3],[0,1,2,4,5,6]]
 
-        findCriticalAndPseudoCriticalEdges(n, edges);
+        n = 4;
+        int[][] edges2 = {{0, 1, 1}, {0, 3, 1}, {0, 2, 1}, {1, 2, 1}, {1, 3, 1}, {2, 3, 1}};
+        //预期：
+        //[[],[0,1,2,3,4,5]]
+
+        n = 6;
+        int[][] edges3 = {{0,1,2},{0,2,5},{2,3,5},{1,4,4},{2,5,5},{4,5,2}};// todo..
+
+        findCriticalAndPseudoCriticalEdges(n, edges3);
     }
 
     public static List<List<Integer>> findCriticalAndPseudoCriticalEdges(int n, int[][] edges) {
@@ -98,13 +111,12 @@ public class 找到最小生成树里的关键边和伪关键边_1489 {
             node[i] = i;
         }
 
-        int bast = 0;
+        int bast = 0; // 最小树
         int useLine = 0;
         for (int i = 0; i < lineSize; i++) {
             int start = newLine[i][0];
             int end = newLine[i][1];
             int weight = newLine[i][2];
-            int index = newLine[i][3];
 
             if (union(start, end, node)) {
                 // 可以连线
@@ -112,15 +124,75 @@ public class 找到最小生成树里的关键边和伪关键边_1489 {
                 useLine++;
             }
 
-            if (useLine == n - 1) {
+            if (useLine == lastLineSize) {
                 break;
             }
 
         }
 
         // 找到最小图的结构 下面就是找关键线和非关键线
+        int minSize = 0;
+        for (int j = 0; j < lineSize; j++) {
+            int min = 0;// 过滤掉条线之后的最小生成树
+            int jLine = 0;
+            for (int i = 0; i < n; i++) {
+                node[i] = i;
+            }
+            // 判断是否是必须线 （不使用该线， 若不能连通或连通指大于最小值，则为必须边）
+            for (int i = 0; i < lineSize; i++) {
+                if (i == j) {
+                    continue;
+                }
+                if (union(newLine[i][0], newLine[i][1], node)) {
+                    min += newLine[i][2];
+                    jLine++;
+                }
+                if (jLine == lastLineSize) {
+                    break;
+                }
+            }
 
-        return null;
+            if (jLine != (lastLineSize)) {
+                // 不连通
+                mastLine.add(newLine[j][3]);
+                continue;
+            } else if (min > bast) {
+                // 超过了最小值
+                mastLine.add(newLine[j][3]);
+                continue;
+            }
+
+            // 判断是否是非关键边， 使用该边，指连通值不能变大
+            for (int i = 0; i < n; i++) {
+                node[i] = i;
+            }
+            jLine = 1;
+            union(newLine[j][0], newLine[j][1], node);
+            min = newLine[j][2];
+            for (int i = 0; i < lineSize; i++) {
+                if (i == j) {
+                    continue;
+                }
+                if (union(newLine[i][0], newLine[i][1], node)) {
+                    min += newLine[i][2];
+                    jLine++;
+                }
+                if (jLine == lastLineSize) {
+                    break;
+                }
+                if (min > bast) {
+                    break;
+                }
+            }
+            if (min == bast) {
+                otherLine.add(newLine[j][3]);
+            }
+
+        }
+
+        result.add(mastLine);
+        result.add(otherLine);
+        return result;
     }
 
     private static boolean union(int start, int end, int[] node) {
@@ -129,7 +201,7 @@ public class 找到最小生成树里的关键边和伪关键边_1489 {
         if (startFather == endFather) {
             return false;
         }
-        node[start] = endFather;
+        node[node[start]] = endFather;
         return true;
     }
 
