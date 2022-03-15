@@ -7,6 +7,13 @@ package cn.kylin.leetcode;
 public class main {
 
 
+    int[] a;
+
+    public main(int[] a1){
+        this.a = a1;
+    }
+
+
     // 测试冲突提交
 
     public static void main(String[] args) {
